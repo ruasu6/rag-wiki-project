@@ -1,0 +1,94 @@
+[
+  {
+    "source_id": "S01",
+    "title": "What is Retrieval-Augmented Generation (RAG)?",
+    "publisher": "Google Cloud",
+    "url": "https://cloud.google.com/use-cases/retrieval-augmented-generation",
+    "target_wiki_pages": [
+      "01-introduction.md",
+      "05-retrieval.md",
+      "06-evaluation.md"
+    ],
+    "status": "INGESTED",
+    "retrieved_at": "2026-11-16T16:54:24+08:00",
+    "ingested_at": "2026-11-16T16:57:47+08:00",
+    "content_hash": "3941157a19fbc106add6d5c6b273cf0c4bc936cfcd2e9c97451ee5eeda2e08e8"
+  },
+  {
+    "source_id": "S02",
+    "title": "Understanding Retrieval Augmented Generation",
+    "publisher": "AWS",
+    "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/retrieval-augmented-generation-options/what-is-rag.html",
+    "target_wiki_pages": [
+      "01-introduction.md",
+      "02-architecture.md",
+      "03-chunking.md",
+      "04-embedding.md",
+      "05-retrieval.md",
+      "06-evaluation.md"
+    ],
+    "status": "INGESTED",
+    "retrieved_at": "2026-11-16T17:28:09+08:00",
+    "ingested_at": "2026-11-16T17:33:19+08:00",
+    "content_hash": "fb251323176df17c8fa1eddd7cf239a77dd2f5f63597ac7bd555203f6a66f3a9"
+  },
+  {
+    "source_id": "S03",
+    "title": "Chunk large documents for RAG and vector search in Azure AI Search",
+    "publisher": "Microsoft",
+    "url": "https://learn.microsoft.com/en-us/azure/search/vector-search-how-to-chunk-documents",
+    "target_wiki_pages": [
+      "03-chunking.md"
+    ],
+    "status": "INGESTED",
+    "retrieved_at": "2026-11-16T18:09:33+08:00",
+    "ingested_at": "2026-11-16T18:14:17+08:00",
+    "content_hash": "e9e30be5261bc6e9751cfe2681ba27aa1273dc83d3a30ab6deea0a8e74c1b0d4"
+  },
+  {
+    "source_id": "S04",
+    "title": "Vector embeddings",
+    "publisher": "OpenAI",
+    "url": "https://developers.openai.com/api/docs/guides/embeddings",
+    "target_wiki_pages": [
+      "04-embedding.md",
+      "05-retrieval.md"
+    ],
+    "status": "INGESTED",
+    "retrieved_at": "2026-11-16T18:22:58+08:00",
+    "ingested_at": "2026-11-16T18:24:13+08:00",
+    "content_hash": "6576940ddbfd4adf196447fb84fae7e4e297d8ed75c2540ba533b3a03e978b51"
+  },
+  {
+    "source_id": "S05",
+    "title": "Retrieval-augmented generation (RAG) in Azure AI Search",
+    "publisher": "Microsoft",
+    "url": "https://learn.microsoft.com/en-us/azure/search/retrieval-augmented-generation-overview",
+    "target_wiki_pages": [
+      "01-introduction.md",
+      "02-architecture.md",
+      "03-chunking.md",
+      "04-embedding.md",
+      "05-retrieval.md",
+      "06-evaluation.md"
+    ],
+    "status": "INGESTED",
+    "retrieved_at": "2026-11-16T18:24:34+08:00",
+    "ingested_at": "2026-11-16T18:25:24+08:00",
+    "content_hash": "0a958e738762038f7bde4537aea73d23e4599cb8a94df3088d79884ea75f6385"
+  },
+  {
+    "source_id": "S06",
+    "title": "Retrieval Augmented Generation (RAG) with Deep Agents",
+    "publisher": "LangChain",
+    "url": "https://docs.langchain.com/oss/python/deepagents/rag",
+    "target_wiki_pages": [
+      "02-architecture.md",
+      "06-evaluation.md"
+    ],
+    "status": "INGESTED",
+    "retrieved_at": "2026-11-16T18:25:42+08:00",
+    "ingested_at": "2026-11-16T18:26:33+08:00",
+    "content_hash": "e0b049dd0ccfbef40fb4824162e740c16b85f624baa7a5e811fe9aa4004cfcf3"
+  }
+]
