@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="以已驗證 RAG Wiki 為知識來源的初學者教學簡報">
+  <title>RAG 入門教學｜從找資料到產生有依據的回答</title>
+  <style>
+    :root {
+      --ink: #17233c;
+      --muted: #5e6b7f;
+      --paper: #f8fafc;
+      --panel: rgba(255, 255, 255, .9);
+      --line: #dce4ed;
+      --blue: #2358d5;
+      --blue-soft: #eaf0ff;
+      --teal: #087f78;
+      --teal-soft: #dff7f2;
+      --orange: #d66a1f;
+      --orange-soft: #fff0e5;
+      --violet: #6941c6;
+      --shadow: 0 24px 70px rgba(29, 49, 85, .14);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 16%, rgba(35, 88, 213, .12), transparent 30%),
+        radial-gradient(circle at 86% 80%, rgba(8, 127, 120, .12), transparent 28%),
+        var(--paper);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      line-height: 1.55;
+    }
+
+    button, a { font: inherit; }
+    a { color: var(--blue); text-underline-offset: .2em; }
+    button:focus-visible, a:focus-visible, summary:focus-visible {
+      outline: 3px solid rgba(35, 88, 213, .35);
+      outline-offset: 3px;
+    }
+
+    .deck {
+      position: relative;
+      height: 100%;
+      padding: clamp(14px, 2.4vw, 32px);
+      padding-bottom: clamp(90px, 11vh, 112px);
+    }
+
+    .slide {
+      display: none;
+      height: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      overflow-y: auto;
+      background: var(--panel);
+      border: 1px solid rgba(220, 228, 237, .88);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: clamp(24px, 4.8vw, 72px);
+      scrollbar-width: thin;
+    }
+    .slide.active { display: block; animation: enter .28s ease-out; }
+    @keyframes enter { from { opacity: .25; transform: translateY(8px); } }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 10px;
+      color: var(--blue);
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-size: .82rem;
+    }
+    .eyebrow::before { content: ""; width: 28px; height: 4px; border-radius: 4px; background: var(--blue); }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 880px; margin-bottom: 20px; font-size: clamp(2.35rem, 6vw, 5rem); line-height: 1.04; letter-spacing: -.05em; }
+    h2 { margin-bottom: 12px; font-size: clamp(2rem, 4.2vw, 3.8rem); line-height: 1.1; letter-spacing: -.04em; }
+    h3 { margin-bottom: 8px; font-size: clamp(1rem, 1.55vw, 1.28rem); line-height: 1.25; }
+    .lead { max-width: 860px; color: var(--muted); font-size: clamp(1.05rem, 1.75vw, 1.35rem); }
+    .accent { color: var(--blue); }
+    .highlight { padding: 0 .15em; background: linear-gradient(transparent 58%, #bdeee7 58%); }
+
+    .grid { display: grid; gap: clamp(14px, 2vw, 24px); }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      min-width: 0;
+      padding: clamp(16px, 2vw, 24px);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+    .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+    .card.soft-blue { background: var(--blue-soft); border-color: #cad8ff; }
+    .card.soft-teal { background: var(--teal-soft); border-color: #b8e8df; }
+    .card.soft-orange { background: var(--orange-soft); border-color: #ffd9bf; }
+    .card-number { display: block; margin-bottom: 8px; color: var(--blue); font-size: .85rem; font-weight: 900; letter-spacing: .08em; }
+    .term { font-weight: 850; color: var(--ink); }
+    ul { padding-left: 1.25em; }
+    li + li { margin-top: .35em; }
+
+    .compare { margin-top: clamp(18px, 3vw, 36px); }
+    .compare .card { position: relative; }
+    .compare .card:first-child::after {
+      content: "→";
+      position: absolute;
+      z-index: 2;
+      right: -29px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--blue);
+      font-size: 2rem;
+      font-weight: 900;
+    }
+
+    .flow {
+      display: flex;
+      align-items: stretch;
+      gap: 24px;
+      margin: 24px 0;
+    }
+    .flow-step {
+      position: relative;
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid #cad8ff;
+      border-radius: 16px;
+      background: var(--blue-soft);
+      text-align: center;
+    }
+    .flow-step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -21px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--blue);
+      font-size: 1.4rem;
+      font-weight: 900;
+    }
+    .flow-step b { display: block; margin-bottom: 5px; }
+
+    .lane {
+      display: grid;
+      grid-template-columns: 116px 1fr;
+      gap: 14px;
+      align-items: center;
+      margin: 16px 0;
+    }
+    .lane-label { color: var(--muted); font-weight: 850; }
+    .lane .flow { margin: 0; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: var(--teal);
+      background: var(--teal-soft);
+      font-size: .82rem;
+      font-weight: 800;
+    }
+    .example {
+      margin-top: clamp(18px, 3vw, 30px);
+      padding: 18px 20px;
+      border-left: 5px solid var(--orange);
+      border-radius: 4px 14px 14px 4px;
+      background: var(--orange-soft);
+    }
+    .example strong { color: #a9480b; }
+    .example p:last-child { margin-bottom: 0; }
+    .boundary { margin-top: 14px; color: var(--muted); font-size: .88rem; }
+
+    .scale { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 18px; }
+    .scale div { padding: 12px 16px; }
+    .scale div:first-child { border-radius: 12px 0 0 12px; background: var(--teal-soft); }
+    .scale div:last-child { border-radius: 0 12px 12px 0; background: var(--orange-soft); text-align: right; }
+
+    .vector-space {
+      position: relative;
+      min-height: 205px;
+      overflow: hidden;
+      border: 1px dashed #9eb2ce;
+      border-radius: 18px;
+      background-image: linear-gradient(#eef2f7 1px, transparent 1px), linear-gradient(90deg, #eef2f7 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+    .dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 6px rgba(35, 88, 213, .12); }
+    .dot::after { content: attr(data-label); position: absolute; left: 20px; top: -7px; width: 110px; font-size: .78rem; font-weight: 800; }
+    .dot.a { left: 22%; top: 28%; }
+    .dot.b { left: 33%; top: 43%; background: var(--teal); }
+    .dot.c { right: 19%; bottom: 23%; background: var(--orange); }
+
+    .checklist { list-style: none; padding: 0; counter-reset: checks; }
+    .checklist li { position: relative; padding: 12px 14px 12px 48px; border-bottom: 1px solid var(--line); }
+    .checklist li::before {
+      counter-increment: checks;
+      content: counter(checks);
+      position: absolute;
+      left: 8px;
+      top: 10px;
+      display: grid;
+      place-items: center;
+      width: 27px;
+      height: 27px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--teal);
+      font-size: .8rem;
+      font-weight: 900;
+    }
+
+    .quiz { margin-top: 18px; }
+    details { border-bottom: 1px solid var(--line); }
+    summary { cursor: pointer; padding: 14px 4px; font-weight: 800; }
+    details p { padding: 0 4px 14px; margin: 0; color: var(--muted); }
+
+    .citation {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px 12px;
+      margin-top: clamp(22px, 3vw, 38px);
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .8rem;
+    }
+    .citation strong { color: var(--ink); }
+    .citation a { text-decoration-style: dotted; }
+
+    .controls {
+      position: fixed;
+      z-index: 20;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-columns: auto minmax(145px, 270px) auto;
+      align-items: center;
+      gap: 14px;
+      width: min(720px, calc(100% - 28px));
+      padding: 10px 12px;
+      border: 1px solid rgba(220, 228, 237, .92);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 12px 38px rgba(29, 49, 85, .16);
+      backdrop-filter: blur(12px);
+    }
+    .nav-button {
+      min-width: 112px;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: #fff;
+      background: var(--ink);
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .nav-button:disabled { cursor: not-allowed; opacity: .36; }
+    .progress-wrap { display: grid; gap: 5px; text-align: center; color: var(--muted); font-size: .78rem; font-variant-numeric: tabular-nums; }
+    .progress-track { height: 7px; overflow: hidden; border-radius: 99px; background: #e8edf3; }
+    .progress-bar { height: 100%; width: 10%; border-radius: inherit; background: linear-gradient(90deg, var(--blue), var(--teal)); transition: width .25s ease; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    @media (max-width: 820px) {
+      .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .lane { grid-template-columns: 1fr; }
+      .lane .flow { overflow-x: auto; padding-bottom: 6px; }
+      .lane .flow-step { min-width: 145px; }
+    }
+    @media (max-width: 620px) {
+      .deck { padding: 8px; padding-bottom: 86px; }
+      .slide { border-radius: 18px; padding: 24px 18px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .flow { flex-direction: column; gap: 10px; }
+      .flow-step:not(:last-child)::after { content: "↓"; right: auto; left: 50%; top: auto; bottom: -20px; transform: translateX(-50%); }
+      .compare .card:first-child::after { content: "↓"; right: auto; left: 50%; top: auto; bottom: -29px; transform: translateX(-50%); }
+      .controls { bottom: 8px; grid-template-columns: 1fr auto 1fr; gap: 7px; padding: 8px; }
+      .nav-button { min-width: 0; padding: 10px; }
+      .nav-label { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+    }
+    @media print {
+      body { height: auto; overflow: visible; background: #fff; }
+      .deck { height: auto; padding: 0; }
+      .slide, .slide.active { display: block; min-height: 100vh; page-break-after: always; border: 0; box-shadow: none; }
+      .controls { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main id="deck" class="deck" aria-label="RAG 入門教學簡報">
+    <section id="slide-1" class="slide active" data-wiki="01-introduction.md,02-architecture.md,03-chunking.md,04-embedding.md,05-retrieval.md,06-evaluation.md" data-sources="S01,S02,S03,S04,S05,S06" role="group" aria-roledescription="投影片" aria-label="第 1 頁，共 10 頁">
+      <p class="eyebrow">RAG Learning Wiki</p>
+      <h1>讓模型先找資料，<br><span class="accent">再產生有依據的回答</span></h1>
+      <p class="lead">從 Chunking、Embedding、Retrieval 到 Generation，用 10 頁建立一張完整的 RAG 心智地圖。</p>
+      <div class="grid grid-4" style="margin-top:32px">
+        <article class="card"><span class="card-number">01</span><h3>理解動機</h3><p>為什麼只靠一般 LLM 不夠？</p></article>
+        <article class="card"><span class="card-number">02</span><h3>看懂流程</h3><p>資料如何從文件走到回答？</p></article>
+        <article class="card"><span class="card-number">03</span><h3>拆解元件</h3><p>四個核心步驟各自做什麼？</p></article>
+        <article class="card"><span class="card-number">04</span><h3>檢查品質</h3><p>有資料依據，是否就一定正確？</p></article>
+      </div>
+      <footer class="citation" aria-label="本頁知識來源">
+        <strong>Wiki 導覽</strong>
+        <a href="../wiki/01-introduction.md">01 基本概念</a><a href="../wiki/02-architecture.md">02 架構</a><a href="../wiki/03-chunking.md">03 Chunking</a><a href="../wiki/04-embedding.md">04 Embedding</a><a href="../wiki/05-retrieval.md">05 Retrieval</a><a href="../wiki/06-evaluation.md">06 品質檢查</a>
+        <span>Source IDs：S01–S06</span>
+      </footer>
+    </section>
+
+    <section id="slide-2" class="slide" data-wiki="01-introduction.md,06-evaluation.md" data-sources="S01" role="group" aria-roledescription="投影片" aria-label="第 2 頁，共 10 頁">
+      <p class="eyebrow">Why RAG</p>
+      <h2>為什麼需要 RAG？</h2>
+      <p class="lead">一般 LLM 主要依靠訓練時學到的資訊；遇到近期資訊或組織內部資料時，可能沒有足夠依據。</p>
+      <div class="grid grid-2 compare">
+        <article class="card soft-orange"><span class="card-number">只問一般 LLM</span><h3>固定教材的限制</h3><ul><li>可能不知道訓練資料之後的資訊</li><li>不一定掌握組織的專門資料</li><li>回答未必有指定資料作依據</li></ul></article>
+        <article class="card soft-teal"><span class="card-number">加入 RAG</span><h3>回答前先查資料</h3><ul><li>取得較新的外部內容</li><li>使用當前任務需要的資料</li><li>讓回答以相關內容作為參考</li></ul></article>
+      </div>
+      <aside class="example"><strong>教學示例（非來源事實）</strong><p>詢問「今年有幾天家庭照顧假？」時，先查最新版公司規章，再交給模型整理回答。</p></aside>
+      <p class="boundary">重要界線：RAG 增加可參考的依據，並不保證答案一定正確。</p>
+      <footer class="citation"><strong>Wiki</strong><a href="../wiki/01-introduction.md">01〈和一般 LLM 有什麼不同？〉</a><a href="../wiki/06-evaluation.md">06〈RAG 的入門優勢〉</a><span>Source ID：S01</span></footer>
+    </section>
+
+    <section id="slide-3" class="slide" data-wiki="01-introduction.md" data-sources="S01" role="group" aria-roledescription="投影片" aria-label="第 3 頁，共 10 頁">
+      <p class="eyebrow">Definition</p>
+      <h2>RAG 是什麼？</h2>
+      <p class="lead"><span class="highlight">檢索增強生成</span>把資訊檢索系統與生成式 LLM 結合：先找出相關外部內容，再讓模型把內容當作回答依據。</p>
+      <div class="flow" aria-label="RAG 三段概念流程">
+        <div class="flow-step"><b>Retrieval</b>從外部來源找出相關內容</div>
+        <div class="flow-step"><b>Pre-processing</b>整理成模型可使用的脈絡</div>
+        <div class="flow-step"><b>Grounded Generation</b>依據取得的內容產生回答</div>
+      </div>
+      <div class="grid grid-2">
+        <article class="card"><h3>RAG 多做了一件事</h3><p>模型回答前，系統先取得與問題相關的外部資料。</p></article>
+        <article class="card"><h3>RAG 沒有承諾的事</h3><p>「有檢索」不等於「一定找對」，也不等於生成答案必然正確。</p></article>
+      </div>
+      <footer class="citation"><strong>Wiki</strong><a href="../wiki/01-introduction.md">01〈RAG 是什麼？〉、〈核心流程〉</a><span>Source ID：S01</span></footer>
+    </section>
+
+    <section id="slide-4" class="slide" data-wiki="01-introduction.md,02-architecture.md" data-sources="S01,S02" role="group" aria-roledescription="投影片" aria-label="第 4 頁，共 10 頁">
+      <p class="eyebrow">Architecture</p>
+      <h2>RAG 的完整流程</h2>
+      <p class="lead">先在離線階段準備可搜尋的索引；使用者提問後，再於線上階段檢索、加入脈絡並生成回答。</p>
+      <div class="lane"><div class="lane-label">離線：先準備</div><div class="flow"><div class="flow-step"><b>文件處理</b>整理與切分</div><div class="flow-step"><b>Embedding</b>轉成向量表示</div><div class="flow-step"><b>建立索引</b>保存文字、向量與 metadata</div></div></div>
+      <div class="lane"><div class="lane-label">線上：每次提問</div><div class="flow"><div class="flow-step"><b>Query</b>接收問題</div><div class="flow-step"><b>Retrieve</b>找出相關片段</div><div class="flow-step"><b>Augment</b>把片段加入脈絡</div><div class="flow-step"><b>Generate</b>模型產生回答</div></div></div>
+      <aside class="example"><strong>一句話記法</strong><p>先把資料整理成「找得到」的形式；提問時，再把「找對的資料」交給模型。</p></aside>
+      <footer class="citation"><strong>Wiki</strong><a href="../wiki/02-architecture.md">02〈先分成兩個階段〉、〈四步驟流程〉</a><a href="../wiki/01-introduction.md">01〈S02 補充〉</a><span>Source IDs：S01、S02</span></footer>
+    </section>
+
+    <section id="slide-5" class="slide" data-wiki="03-chunking.md" data-sources="S02,S03" role="group" aria-roledescription="投影片" aria-label="第 5 頁，共 10 頁">
+      <p class="eyebrow">Step 1 · Chunking</p>
+      <h2>把大文件切成可處理的片段</h2>
+      <p class="lead">Chunking 通常位於索引準備階段、建立 Embedding 之前，讓文件能被分段處理與檢索。</p>
+      <div class="grid grid-4">
+        <article class="card"><h3>固定長度</h3><p>依字元或 token 數切分，規則簡單，但可能切斷語意。</p></article>
+        <article class="card"><h3>依結構</h3><p>依句子、段落或標題切分，較能保留文件組織。</p></article>
+        <article class="card"><h3>依語意</h3><p>以內容語意變化決定邊界，成本與複雜度較高。</p></article>
+        <article class="card"><h3>組合策略</h3><p>把結構、大小與其他條件一起使用。</p></article>
+      </div>
+      <div class="scale" aria-label="Chunk 大小取捨"><div><b>較小 Chunk</b><br>比較聚焦，可能失去前後關係</div><div><b>較大 Chunk</b><br>保留更多脈絡，可能混合多個主題</div></div>
+      <aside class="example"><strong>教學示例（非來源事實）</strong><p>員工手冊可先依章節切分，再讓相鄰片段保留少量重疊，避免一句規則被切在邊界兩側。</p></aside>
+      <p class="boundary">沒有脫離資料與任務的單一最佳 Chunk Size；Overlap 也不是越大越好。</p>
+      <footer class="citation"><strong>Wiki</strong><a href="../wiki/03-chunking.md">03〈常見切分策略〉、〈Chunk Overlap〉、〈如何選擇 Chunk Size？〉</a><span>Source IDs：S02、S03</span></footer>
+    </section>
+
+    <section id="slide-6" class="slide" data-wiki="04-embedding.md" data-sources="S02,S04" role="group" aria-roledescription="投影片" aria-label="第 6 頁，共 10 頁">
+      <p class="eyebrow">Step 2 · Embedding</p>
+      <h2>把文字轉成可比較的向量</h2>
+      <p class="lead">Embedding 是文字的數值表示，用來表達內容的語意或脈絡；文件片段和問題都可轉成相容的表示。</p>
+      <div class="grid grid-2">
+        <article class="card"><h3>意思變成「座標」</h3><p>向量距離可用來衡量文字的相關程度；距離較小通常代表較相關。</p><p><span class="pill">Embedding ≠ Vector Database</span></p><p>Embedding 是表示；Vector Database／索引負責保存並支援搜尋。</p></article>
+        <div class="vector-space" role="img" aria-label="語意相近文字在向量空間中位置較接近的示意圖"><span class="dot a" data-label="如何請育嬰假？"></span><span class="dot b" data-label="育嬰留停規定"></span><span class="dot c" data-label="差旅報帳流程"></span></div>
+      </div>
+      <aside class="example"><strong>視覺化為教學示意</strong><p>圖中的位置與距離不是實際運算結果，只用來幫助理解「語意相近的文字可被排得較近」。</p></aside>
+      <footer class="citation"><strong>Wiki</strong><a href="../wiki/04-embedding.md">04〈Embedding 是什麼？〉、〈Embedding 與 Vector Database 不一樣〉、〈S04 補充〉</a><span>Source IDs：S02、S04</span></footer>
+    </section>
+
+    <section id="slide-7" class="slide" data-wiki="05-retrieval.md" data-sources="S01,S04,S05" role="group" aria-roledescription="投影片" aria-label="第 7 頁，共 10 頁">
+      <p class="eyebrow">Step 3 · Retrieval</p>
+      <h2>先找出最相關的資料</h2>
+      <p class="lead">Retriever 不直接回答問題；它的任務是從外部資料中選出可能有用的候選片段。</p>
+      <div class="grid grid-3">
+        <article class="card soft-blue"><h3>向量搜尋</h3><p>依語意相似度尋找與 Query 接近的內容，不只比對完全相同的字詞。</p></article>
+        <article class="card soft-teal"><h3>Hybrid Search</h3><p>結合關鍵字與向量搜尋，使用兩類不同的比對線索。</p></article>
+        <article class="card soft-orange"><h3>Reranking</h3><p>取得候選內容後再評分，讓較相關的結果排在前面。</p></article>
+      </div>
+      <div class="flow" aria-label="檢索與重新排序流程"><div class="flow-step"><b>Query</b>使用者問題</div><div class="flow-step"><b>Candidate Set</b>找出候選片段</div><div class="flow-step"><b>Optional Rerank</b>重新評估順序</div><div class="flow-step"><b>Context</b>交給模型的內容</div></div>
+      <p class="boundary">Hybrid Search 與 Reranking 是可選的進階做法；Embedding 本身也不等於完整 Retriever，更不保證第一名結果能回答問題。</p>
+      <footer class="citation"><strong>Wiki</strong><a href="../wiki/05-retrieval.md">05〈向量搜尋〉、〈Hybrid Search〉、〈Reranking〉、S04/S05 補充</a><span>Source IDs：S01、S04、S05</span></footer>
+    </section>
+
+    <section id="slide-8" class="slide" data-wiki="01-introduction.md,02-architecture.md" data-sources="S01,S02" role="group" aria-roledescription="投影片" aria-label="第 8 頁，共 10 頁">
+      <p class="eyebrow">Step 4 · Generation</p>
+      <h2>讓模型依據找到的內容回答</h2>
+      <p class="lead">系統把使用者問題與檢索到的 Context 一起交給 LLM，模型再利用額外脈絡產生回答。</p>
+      <div class="flow" aria-label="Grounded Generation 流程"><div class="flow-step"><b>Query</b>「家庭照顧假有幾天？」</div><div class="flow-step"><b>Retrieved Context</b>相關規章片段</div><div class="flow-step"><b>LLM</b>結合問題與脈絡</div><div class="flow-step"><b>Answer</b>依據片段組織回答</div></div>
+      <div class="grid grid-2">
+        <article class="card soft-teal"><h3>Grounding 的價值</h3><p>回答能以指定的外部內容為參考，而非完全依靠訓練時學到的資訊。</p></article>
+        <article class="card soft-orange"><h3>仍然需要檢查</h3><p>如果取回的內容不相關，即使模型依據它回答，結果仍可能離題或錯誤。</p></article>
+      </div>
+      <p class="boundary">本頁只說明 Wiki 支持的基礎 Generation 角色，不延伸到 Prompt 模板或生成參數。</p>
+      <footer class="citation"><strong>Wiki</strong><a href="../wiki/01-introduction.md">01〈核心流程〉</a><a href="../wiki/02-architecture.md">02〈四步驟流程〉</a><span>Source IDs：S01、S02</span></footer>
+    </section>
+
+    <section id="slide-9" class="slide" data-wiki="06-evaluation.md" data-sources="S01,S05,S06" role="group" aria-roledescription="投影片" aria-label="第 9 頁，共 10 頁">
+      <p class="eyebrow">Quality Check</p>
+      <h2>有資料依據，仍不等於一定正確</h2>
+      <p class="lead">RAG 品質同時受到知識來源、檢索相關性與生成結果影響。初學者可以先用五個問題檢查。</p>
+      <div class="grid grid-2">
+        <ol class="checklist card"><li>系統有找到資料嗎？</li><li>找到的內容真的相關嗎？</li><li>回答有依據取得的內容嗎？</li><li>資料夠新嗎？</li><li>回答真的解決問題嗎？</li></ol>
+        <div class="grid">
+          <article class="card soft-orange"><h3>常見限制</h3><p>查詢意圖、多來源資料、模型輸入限制、回應時間，以及安全與權限，都可能影響實作結果。</p></article>
+          <article class="card soft-blue"><h3>進階但通用的原則</h3><p>可用明確規則檢查回答是否以證據為依據；若需修訂，應設定次數上限並保留可追查紀錄。</p></article>
+        </div>
+      </div>
+      <p class="boundary">Hybrid Search、Reranking 或特定追蹤產品都不能單獨保證答案正確。</p>
+      <footer class="citation"><strong>Wiki</strong><a href="../wiki/06-evaluation.md">06〈重要限制〉、〈初學者品質檢查〉、S05/S06 補充</a><span>Source IDs：S01、S05、S06</span></footer>
+    </section>
+
+    <section id="slide-10" class="slide" data-wiki="01-introduction.md,02-architecture.md,03-chunking.md,04-embedding.md,05-retrieval.md,06-evaluation.md" data-sources="S01,S02,S03,S04,S05,S06" role="group" aria-roledescription="投影片" aria-label="第 10 頁，共 10 頁">
+      <p class="eyebrow">Wrap-up</p>
+      <h2>把完整流程帶走</h2>
+      <div class="flow" aria-label="RAG 重點流程"><div class="flow-step"><b>Chunk</b>切成可用片段</div><div class="flow-step"><b>Embed</b>建立數值表示</div><div class="flow-step"><b>Retrieve</b>找出相關內容</div><div class="flow-step"><b>Augment</b>加入模型脈絡</div><div class="flow-step"><b>Generate</b>產生回答</div><div class="flow-step"><b>Validate</b>檢查依據與品質</div></div>
+      <div class="quiz card">
+        <h3>理解測驗｜點選題目看答案</h3>
+        <details><summary>1. 為什麼 RAG 能使用較新的資料？</summary><p>因為系統可在回答時取得外部內容，而不只依賴 LLM 訓練時學到的資訊。（Wiki 01、06｜S01）</p></details>
+        <details><summary>2. Chunking 為什麼不能只套用一個固定大小？</summary><p>Chunk 大小要配合文件結構、查詢方式、模型限制與使用情境；大小兩端各有取捨。（Wiki 03｜S03）</p></details>
+        <details><summary>3. Grounding 是否代表答案一定正確？</summary><p>不是。若檢索內容不相關，依據那些內容生成的回答仍可能離題或錯誤。（Wiki 01、05、06｜S01）</p></details>
+      </div>
+      <p class="lead" style="margin-top:22px"><strong>最後一句：</strong>RAG 不是讓模型知道所有事情，而是讓系統在回答前，先取得更適合的外部依據。</p>
+      <footer class="citation"><strong>Wiki 總結</strong><a href="../wiki/01-introduction.md">01</a><a href="../wiki/02-architecture.md">02</a><a href="../wiki/03-chunking.md">03</a><a href="../wiki/04-embedding.md">04</a><a href="../wiki/05-retrieval.md">05</a><a href="../wiki/06-evaluation.md">06</a><span>Source IDs：S01–S06</span></footer>
+    </section>
+  </main>
+
+  <nav class="controls" aria-label="投影片導覽">
+    <button id="prevButton" class="nav-button" type="button" aria-label="上一頁"><span aria-hidden="true">←</span> <span class="nav-label">上一頁</span></button>
+    <div class="progress-wrap">
+      <span id="pageStatus" aria-live="polite">第 1 頁，共 10 頁</span>
+      <div class="progress-track" role="progressbar" aria-label="簡報進度" aria-valuemin="1" aria-valuemax="10" aria-valuenow="1"><div id="progressBar" class="progress-bar"></div></div>
+    </div>
+    <button id="nextButton" class="nav-button" type="button" aria-label="下一頁"><span class="nav-label">下一頁</span> <span aria-hidden="true">→</span></button>
+  </nav>
+  <p id="keyboardHelp" class="sr-only">使用左右方向鍵切換投影片，Home 前往第一頁，End 前往最後一頁。</p>
+
+  <script>
+    (() => {
+      "use strict";
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const previous = document.getElementById("prevButton");
+      const next = document.getElementById("nextButton");
+      const status = document.getElementById("pageStatus");
+      const bar = document.getElementById("progressBar");
+      const track = document.querySelector("[role='progressbar']");
+      const hashMatch = window.location.hash.match(/^#slide-(\d+)$/);
+      let current = hashMatch ? Math.min(Math.max(Number(hashMatch[1]) - 1, 0), slides.length - 1) : 0;
+
+      function render(updateHash = true) {
+        slides.forEach((slide, index) => {
+          const active = index === current;
+          slide.classList.toggle("active", active);
+          slide.setAttribute("aria-hidden", String(!active));
+          if (active) slide.scrollTop = 0;
+        });
+        previous.disabled = current === 0;
+        next.disabled = current === slides.length - 1;
+        status.textContent = `第 ${current + 1} 頁，共 ${slides.length} 頁`;
+        bar.style.width = `${((current + 1) / slides.length) * 100}%`;
+        track.setAttribute("aria-valuemax", String(slides.length));
+        track.setAttribute("aria-valuenow", String(current + 1));
+        if (updateHash) history.replaceState(null, "", `#slide-${current + 1}`);
+      }
+
+      function goTo(index) {
+        const target = Math.min(Math.max(index, 0), slides.length - 1);
+        if (target !== current) {
+          current = target;
+          render();
+        }
+      }
+
+      previous.addEventListener("click", () => goTo(current - 1));
+      next.addEventListener("click", () => goTo(current + 1));
+      document.addEventListener("keydown", (event) => {
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+        if (event.key === "ArrowLeft") goTo(current - 1);
+        if (event.key === "ArrowRight" || event.key === " ") {
+          event.preventDefault();
+          goTo(current + 1);
+        }
+        if (event.key === "Home") goTo(0);
+        if (event.key === "End") goTo(slides.length - 1);
+      });
+      window.addEventListener("hashchange", () => {
+        const match = window.location.hash.match(/^#slide-(\d+)$/);
+        if (match) {
+          current = Math.min(Math.max(Number(match[1]) - 1, 0), slides.length - 1);
+          render(false);
+        }
+      });
+      render(false);
+
+      // Browser-only smoke test. It is inert during normal presentation use.
+      if (new URLSearchParams(window.location.search).get("selftest") === "1") {
+        const assertions = [];
+        const check = (name, condition) => assertions.push({ name, pass: Boolean(condition) });
+        next.click();
+        check("next button", current === 1 && status.textContent.includes("第 2 頁"));
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        check("right arrow", current === 2);
+        previous.click();
+        check("previous button", current === 1);
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
+        check("End key", current === slides.length - 1 && next.disabled);
+        check("progress at end", track.getAttribute("aria-valuenow") === String(slides.length));
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
+        check("Home key", current === 0 && previous.disabled);
+        check("single active slide", document.querySelectorAll(".slide.active").length === 1);
+        const passed = assertions.every((item) => item.pass);
+        document.body.dataset.selftest = passed ? "PASS" : "FAIL";
+        document.body.dataset.selftestResults = assertions.map((item) => `${item.name}:${item.pass ? "PASS" : "FAIL"}`).join("|");
+      }
+    })();
+  </script>
+</body>
+</html>
